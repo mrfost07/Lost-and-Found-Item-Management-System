@@ -5,13 +5,13 @@ import os
 from PIL import Image
 
 # Set page configuration
-st.set_page_config(page_title="Lost and Found Item Management System", layout="centered")
+st.set_page_config(page_title="Lost and Found Item Management System", layout="wide")
 
 # Database connection
 conn = sqlite3.connect("lost_and_found.db", check_same_thread=False)
 c = conn.cursor()
 
-# Create tables if they don't exist
+# Create tables
 c.execute(''' 
     CREATE TABLE IF NOT EXISTS items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,14 +25,14 @@ c.execute('''
 ''')
 
 c.execute(''' 
-    CREATE TABLE IF NOT EXISTS admin (
+    CREATE TABLE IF not EXISTS admin (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT,
         password TEXT
     )
 ''')
 
-# Initialize default admin credentials if none exist
+# Initialize default admin credentials 
 c.execute("SELECT * FROM admin")
 if not c.fetchall():
     c.execute("INSERT INTO admin (username, password) VALUES (?, ?)", ("admin", "admin"))
@@ -84,111 +84,137 @@ def resize_image(image, width=150):
     img = img.resize((width, height))
     return img
 
-# Initialize session state if not yet initialized
-if "admin_mode" not in st.session_state:
-    st.session_state["admin_mode"] = False
-if "admin_username" not in st.session_state:
-    st.session_state["admin_username"] = ""
-if "admin_password" not in st.session_state:
-    st.session_state["admin_password"] = ""
-if "show_settings" not in st.session_state:
-    st.session_state["show_settings"] = False  # Initialize the settings visibility state
-
 # Sidebar Admin Login
 st.sidebar.title("🔑 Admin Access")
 
+if 'admin_mode' not in st.session_state:
+    st.session_state['admin_mode'] = False
+
+if 'username' not in st.session_state:
+    st.session_state['username'] = ''
+
 if not st.session_state["admin_mode"]:
     # Admin login form
-    username = st.sidebar.text_input("Username", value=st.session_state["admin_username"])
-    password = st.sidebar.text_input("Password", type="password", value=st.session_state["admin_password"])
+    username = st.sidebar.text_input("Username")
+    password = st.sidebar.text_input("Password", type="password")
 
     if st.sidebar.button("Login"):
         if validate_admin(username, password):
             st.session_state["admin_mode"] = True
-            st.session_state["admin_username"] = username
-            st.session_state["admin_password"] = password
-            st.sidebar.success("Logged in as Admin!")
-            st.rerun()  # Force re-render after login
+            st.session_state["username"] = username  
+            st.sidebar.success(f"Logged in as Admin ({username})")
+            st.rerun()  
         else:
             st.sidebar.error("Invalid credentials!")
 else:
     # Admin mode, Settings & Logout
-    st.sidebar.success(f"Logged in as {st.session_state['admin_username']}")
+    username = st.session_state["username"]  
+    st.sidebar.success(f"Logged in as Admin ({username})")
     
-    # Toggle settings visibility on button click
-    settings_button = st.sidebar.button("⚙️ Settings")
-    if settings_button:
-        st.session_state["show_settings"] = not st.session_state["show_settings"]  # Toggle settings visibility
-    
-    # Show settings form if `show_settings` is True
-    if st.session_state["show_settings"]:
-        with st.sidebar.form(key="admin_form"):
-            new_username = st.text_input("New Admin Username", value=st.session_state["admin_username"])
-            new_password = st.text_input("New Admin Password", type="password", value=st.session_state["admin_password"])
-            submit_button = st.form_submit_button(label="Save Changes")
-            if submit_button:
-                c.execute("UPDATE admin SET username = ?, password = ? WHERE username = ?", (new_username, new_password, st.session_state["admin_username"]))
-                conn.commit()
-                st.session_state["admin_username"] = new_username
-                st.session_state["admin_password"] = new_password
-                st.sidebar.success("Admin credentials updated!")
-
     # Logout button
     if st.sidebar.button("Logout"):
         st.session_state["admin_mode"] = False
-        st.session_state["admin_username"] = ""
-        st.session_state["admin_password"] = ""
-        st.session_state["show_settings"] = False  # Hide settings on logout
+        st.session_state["username"] = ''  # Clear username from session_state
         st.sidebar.success("Logged out successfully.")
-        st.rerun()  # Force re-render after logout
+        st.rerun()  
 
-# About section with styling improvements
+    # Settings Button (add this code after the logout button)
+    if 'settings_visible' not in st.session_state:
+        st.session_state['settings_visible'] = False  # Initial state of settings panel
+
+    # Toggle settings panel visibility
+    if st.sidebar.button("Settings"):
+        st.session_state['settings_visible'] = not st.session_state['settings_visible']
+
+    # Show settings form if toggled
+    if st.session_state['settings_visible']:
+        # Place settings form below "Settings" and "Logout" but above "About"
+        st.sidebar.markdown("""<hr style="border-top: 1px solid #3498db; margin-top: 20px;">""", unsafe_allow_html=True)
+        st.sidebar.markdown("<h3 style='text-align: center;'>Update Admin Credentials</h3>", unsafe_allow_html=True)
+        
+        new_username = st.sidebar.text_input("New Username", value=username)
+        new_password = st.sidebar.text_input("New Password", type="password")
+        
+        if st.sidebar.button("Save Changes"):
+            # Update credentials in the database
+            c.execute("UPDATE admin SET username = ?, password = ? WHERE id = 1", (new_username, new_password))
+            conn.commit()
+            st.session_state["username"] = new_username  # Update session state with new username
+            st.sidebar.success("Admin credentials updated successfully!")
+
+# About section 
 with st.sidebar.expander("ℹ️ About", expanded=True):
     st.markdown(
         """
-        **Lost and Found Item Management System**  
-        Created by: **Mark Renier B. Fostanes**
+        <div style="text-align: justify;">
+        <strong>Lost and Found Item Management System</strong><br>
+        Created by: <strong>Mark Renier B. Fostanes</strong><br><br>
 
-        This project helps manage lost items efficiently, allowing users to log, search, and update the status of found belongings.
-        """
+        A simple and efficient system to manage lost and found items. Quickly log, search, and update 
+        item statuses with ease. Stay organized and connect lost items with their rightful owners. 
+        <span style="font-weight: bold; color: #1E90FF;">Efficiency, simplicity, and ease of use.</span>
+        </div>
+        """, unsafe_allow_html=True
     )
 
-
-# Main Application
+# Centered Content 
 st.title("🔍 Lost and Found Item Management System")
 
-if st.session_state["admin_mode"]:
-    st.success(f"You are logged in as Admin ({st.session_state['admin_username']}). Admin actions are available.")
-    
-    # Admin Actions
-    st.header("Admin Actions")
+if 'action' not in st.session_state:
+    st.session_state['action'] = "Add Item"  
 
-    # Hide the "View All Items" section when settings are shown
-    if not st.session_state["show_settings"]:
-        with st.expander("🔧 Update Item Status"):
-            c.execute("SELECT id, item_name FROM items")
-            items = c.fetchall()
-            if items:
-                item_id = st.selectbox("Select Item ID to Update", [item[0] for item in items])
-                new_status = st.selectbox("New Status", ["Unclaimed", "Claimed"])
-                if st.button("Update Status"):
-                    update_item_status(item_id, new_status)
-            else:
-                st.warning("No items to update. Please add items first.")
+# CSS for styling 
+st.markdown("""
+<style>
+    .action-button {
+        font-size: 18px;
+        cursor: pointer;
+        padding: 8px;
+        margin-right: 20px;
+        transition: all 0.3s ease-in-out;
+    }
 
-        with st.expander("❌ Delete Item"):
-            c.execute("SELECT id, item_name FROM items")
-            items = c.fetchall()
-            if items:
-                item_id = st.selectbox("Select Item ID to Delete", [item[0] for item in items])
-                if st.button("Delete Item"):
-                    delete_item(item_id)
-            else:
-                st.warning("No items to delete. Please add items first.")
+    .action-button:hover {
+        color: #3498db;
+        text-decoration: underline;
+    }
 
-# User Actions
-st.header("Actions")
-with st.expander("➕ Add a New Item"):
+    .selected {
+        color: #3498db;
+        font-weight: bold;
+        text-decoration: underline;
+    }
+
+    /* Underline between buttons and content */
+    .underline {
+        border-bottom: 2px solid #3498db;
+        margin-top: 10px;
+        margin-bottom: 20px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Action buttons with Markdown 
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    if st.button("Add Item", key="add_item"):
+        st.session_state['action'] = "Add Item"
+with col2:
+    if st.button("Search Items", key="search_items"):
+        st.session_state['action'] = "Search Items"
+with col3:
+    if st.button("View All Items", key="view_all_items"):
+        st.session_state['action'] = "View All Items"
+with col4:
+    if st.session_state["admin_mode"] and st.button("Admin Actions"):
+        st.session_state['action'] = "Admin Actions"
+
+# Add underline below the action buttons
+st.markdown('<div class="underline"></div>', unsafe_allow_html=True)
+
+if st.session_state['action'] == "Add Item":
+    st.markdown("<h3 style='text-align: center;'>Add Item</h3>", unsafe_allow_html=True)
     item_name = st.text_input("Item Name")
     category = st.selectbox("Category", ["Electronics", "Clothing", "Accessories", "Documents", "Other"])
     description = st.text_area("Description")
@@ -206,7 +232,8 @@ with st.expander("➕ Add a New Item"):
         else:
             st.error("Please fill out all fields.")
 
-with st.expander("🔍 Search Items"):
+elif st.session_state['action'] == "Search Items":
+    st.markdown("<h3 style='text-align: center;'>Search Items</h3>", unsafe_allow_html=True)
     query = st.text_input("Enter item name or keyword to search")
     if st.button("Search"):
         if query:
@@ -214,36 +241,123 @@ with st.expander("🔍 Search Items"):
             if results:
                 for item in results:
                     item_id, item_name, category, description, date_found, status, photo_path = item
-                    st.write(f"**Item Name:** {item_name}")
-                    st.write(f"**Category:** {category}")
-                    st.write(f"**Description:** {description}")
-                    st.write(f"**Date Found:** {date_found}")
-                    st.write(f"**Status:** {status}")
-                    if photo_path and os.path.exists(photo_path):
-                        resized_image = resize_image(photo_path, width=150)  # Resize image to 150px wide
-                        st.image(resized_image)
+
+                    # Create two columns for the layout (details on the left, photo on the right)
+                    col1, col2 = st.columns([3, 1]) 
+
+                    with col1:
+                        # Display the item's details
+                        st.write(f"**Item Name:** {item_name}")
+                        st.write(f"**Category:** {category}")
+                        st.write(f"**Description:** {description}")
+                        st.write(f"**Date Found:** {date_found}")
+                        st.write(f"**Status:** {status}")
+
+                    with col2:
+                        # Display the item's photo if it exists
+                        if photo_path and os.path.exists(photo_path):
+                            img = resize_image(photo_path, width=150)  
+                            st.image(img, use_container_width=False)
             else:
-                st.warning("No items found.")
+                st.write("No items found.")
         else:
             st.warning("Please enter a search query.")
 
-# View All Items Section (only visible when settings are not visible)
-if not st.session_state["show_settings"]:
-    with st.expander("📋 View All Items"):
-        sort_by = st.selectbox("Sort By", ["id", "item_name", "date_found"])
-        ascending = st.radio("Sort Order", ["Ascending", "Descending"]) == "Ascending"
-        items = get_all_items(sort_by, ascending)
-        if items:
-            for item in items:
-                item_id, item_name, category, description, date_found, status, photo_path = item
+
+elif st.session_state['action'] == "View All Items":
+    st.markdown("<h3 style='text-align: center;'>All Found Items</h3>", unsafe_allow_html=True)
+
+    items = get_all_items(sort_by="id", ascending=True)
+
+    if items:
+        # Create two columns for the layout
+        for item in items:
+            item_id, item_name, category, description, date_found, status, photo_path = item
+
+            # Create two columns: one for the details and one for the photo
+            col1, col2 = st.columns([3, 1])  
+
+            with col1:
+                # Display the item's details
                 st.write(f"**Item Name:** {item_name}")
                 st.write(f"**Category:** {category}")
                 st.write(f"**Description:** {description}")
                 st.write(f"**Date Found:** {date_found}")
                 st.write(f"**Status:** {status}")
-                if photo_path and os.path.exists(photo_path):
-                    resized_image = resize_image(photo_path, width=150)  # Resize image to 150px wide
-                    st.image(resized_image)
-        else:
-            st.warning("No items available.")
+                st.write("\n")
+                st.write("\n")
 
+            with col2:
+                # Display the item's photo if it exists
+                if photo_path and os.path.exists(photo_path):
+                    img = resize_image(photo_path, width=150)  
+                    st.image(img, use_container_width=False)
+
+    else:
+        st.write("No items found.")
+
+
+elif st.session_state['action'] == "Admin Actions":
+    st.markdown("<h3 style='text-align: center;'>Admin Actions</h3>", unsafe_allow_html=True)
+
+    action_choice = st.selectbox("Choose Action", ["Update Item Status", "Delete Item"])
+
+    if action_choice == "Update Item Status":
+        # Display a dropdown list of all items
+        items = get_all_items(sort_by="id", ascending=True)
+        item_options = [f"{item[1]} (ID: {item[0]})" for item in items]  
+        selected_item = st.selectbox("Select Item to Update", item_options)
+        item_id = int(selected_item.split(" (ID: ")[1][:-1])  
+
+        # Display item details
+        c.execute("SELECT * FROM items WHERE id = ?", (item_id,))
+        item = c.fetchone()
+        if item:
+            item_name, category, description, date_found, status, photo_path = item[1:]
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.write(f"**Item Name:** {item_name}")
+                st.write(f"**Category:** {category}")
+                st.write(f"**Description:** {description}")
+                st.write(f"**Date Found:** {date_found}")
+                st.write(f"**Status:** {status}")
+            with col2:
+                if photo_path and os.path.exists(photo_path):
+                    img = resize_image(photo_path, width=150)  
+                    st.image(img, use_container_width=False)
+            
+            new_status = st.selectbox("Select New Status", ["Unclaimed", "Claimed", "Returned"])
+            if st.button("Update Status"):
+                update_item_status(item_id, new_status)
+        else:
+            st.warning("Item ID not found.")
+        
+    elif action_choice == "Delete Item":
+        # Display a dropdown list of all items
+        items = get_all_items(sort_by="id", ascending=True)
+        item_options = [f"{item[1]} (ID: {item[0]})" for item in items] 
+        selected_item = st.selectbox("Select Item to Delete", item_options)
+        item_id = int(selected_item.split(" (ID: ")[1][:-1])  
+
+        # Fetch item details for preview
+        c.execute("SELECT * FROM items WHERE id = ?", (item_id,))
+        item = c.fetchone()
+        if item:
+            item_name, category, description, date_found, status, photo_path = item[1:]
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.write(f"**Item Name:** {item_name}")
+                st.write(f"**Category:** {category}")
+                st.write(f"**Description:** {description}")
+                st.write(f"**Date Found:** {date_found}")
+                st.write(f"**Status:** {status}")
+            with col2:
+                if photo_path and os.path.exists(photo_path):
+                    img = resize_image(photo_path, width=150)
+                    st.image(img, use_container_width=False)
+                
+            confirm_delete = st.checkbox("Are you sure you want to delete this item?")
+            if confirm_delete and st.button("Delete Item"):
+                delete_item(item_id)
+        else:
+            st.warning("Item ID not found.")
