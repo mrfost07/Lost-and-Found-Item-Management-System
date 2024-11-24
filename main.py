@@ -73,8 +73,11 @@ def get_all_items(sort_by="id", ascending=True):
 
 # Function to validate admin login
 def validate_admin(username, password):
-    c.execute("SELECT * FROM admin WHERE username = ? AND password = ?", (username, password))
+    query = f"SELECT * FROM admin WHERE username = '{username}' AND password = '{password}'"
+    print(f"Executing Query: {query}")  # For demonstration only
+    c.execute(query)
     return c.fetchone()
+    
 
 # Function to resize image into smaller size
 def resize_image(image, width=150): 
