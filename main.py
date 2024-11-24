@@ -35,7 +35,7 @@ c.execute('''
 # Initialize credentials 
 c.execute("SELECT * FROM admin")
 if not c.fetchall():
-    c.execute("INSERT INTO admin (username, password) VALUES ('admin', 'admin')")
+    c.execute("INSERT INTO admin (username, password) VALUES (?, ?)", ("admin", "admin")) #default
     conn.commit()
 
 # Function to add item to the database
@@ -73,12 +73,8 @@ def get_all_items(sort_by="id", ascending=True):
 
 # Function to validate admin login
 def validate_admin(username, password):
-    # WARNING: Vulnerable to SQL injection
-    query = f"SELECT * FROM admin WHERE username = '{username}' AND password = '{password}'"
-    print(f"Executing Query: {query}")  # Debugging
-    c.execute(query)
+    c.execute("SELECT * FROM admin WHERE username = ? AND password = ?", (username, password))
     return c.fetchone()
-    
 
 # Function to resize image into smaller size
 def resize_image(image, width=150): 
