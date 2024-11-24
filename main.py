@@ -32,10 +32,10 @@ c.execute('''
     )
 ''')
 
-# Initialize default admin credentials 
+# Initialize credentials 
 c.execute("SELECT * FROM admin")
 if not c.fetchall():
-    c.execute("INSERT INTO admin (username, password) VALUES (?, ?)", ("admin", "admin"))
+    c.execute("INSERT INTO admin (username, password) VALUES (?, ?)", ("admin", "admin")) #default
     conn.commit()
 
 # Function to add item to the database
@@ -76,8 +76,8 @@ def validate_admin(username, password):
     c.execute("SELECT * FROM admin WHERE username = ? AND password = ?", (username, password))
     return c.fetchone()
 
-# Function to resize image (smaller size)
-def resize_image(image, width=150):
+# Function to resize image into smaller size
+def resize_image(image, width=150): 
     img = Image.open(image)
     aspect_ratio = img.height / img.width
     height = int(aspect_ratio * width)
@@ -102,7 +102,7 @@ if not st.session_state["admin_mode"]:
         if validate_admin(username, password):
             st.session_state["admin_mode"] = True
             st.session_state["username"] = username  
-            st.sidebar.success(f"Logged in as Admin ({username})")
+            st.sidebar.success(f"Logged in as Admin ({username}).")
             st.rerun()  
         else:
             st.sidebar.error("Invalid credentials!")
@@ -128,14 +128,13 @@ else:
 
     # Show settings form if toggled
     if st.session_state['settings_visible']:
-        # Place settings form below "Settings" and "Logout" but above "About"
         st.sidebar.markdown("""<hr style="border-top: 1px solid #3498db; margin-top: 20px;">""", unsafe_allow_html=True)
-        st.sidebar.markdown("<h3 style='text-align: center;'>Update Admin Credentials</h3>", unsafe_allow_html=True)
+        st.sidebar.markdown("<h3 style='text-align: center;'>⚙️Edit Admin Credentials</h3>", unsafe_allow_html=True)
         
         new_username = st.sidebar.text_input("New Username", value=username)
         new_password = st.sidebar.text_input("New Password", type="password")
         
-        if st.sidebar.button("Save Changes"):
+        if st.sidebar.button("Save"):
             # Update credentials in the database
             c.execute("UPDATE admin SET username = ?, password = ? WHERE id = 1", (new_username, new_password))
             conn.commit()
@@ -148,11 +147,11 @@ with st.sidebar.expander("ℹ️ About", expanded=True):
         """
         <div style="text-align: justify;">
         <strong>Lost and Found Item Management System</strong><br>
-        Created by: <strong>Mark Renier B. Fostanes</strong><br><br>
+        Created by: <strong><span style="font-weight: bold; color: #1E90FF;">Mark Renier B. Fostanes</strong></span><br><br>
 
         A simple and efficient system to manage lost and found items. Quickly log, search, and update 
         item statuses with ease. Stay organized and connect lost items with their rightful owners. 
-        <span style="font-weight: bold; color: #1E90FF;">Efficiency, simplicity, and ease of use.</span>
+        Efficiency, simplicity, and ease of use.
         </div>
         """, unsafe_allow_html=True
     )
@@ -198,28 +197,33 @@ st.markdown("""
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    if st.button("Add Item", key="add_item"):
+    if st.button("➕ Add Item", key="add_item"):
         st.session_state['action'] = "Add Item"
 with col2:
-    if st.button("Search Items", key="search_items"):
+    if st.button("🔎 Search Items", key="search_items"):
         st.session_state['action'] = "Search Items"
 with col3:
-    if st.button("View All Items", key="view_all_items"):
+    if st.button("👀 View All Items", key="view_all_items"):
         st.session_state['action'] = "View All Items"
 with col4:
-    if st.session_state["admin_mode"] and st.button("Admin Actions"):
+    if st.session_state["admin_mode"] and st.button("🔓 Admin Actions"):
         st.session_state['action'] = "Admin Actions"
+
+
+
 
 # Add underline below the action buttons
 st.markdown('<div class="underline"></div>', unsafe_allow_html=True)
 
 if st.session_state['action'] == "Add Item":
-    st.markdown("<h3 style='text-align: center;'>Add Item</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center;'>Add Item</h3>", unsafe_allow_html=True) #add line below buttons
+
     item_name = st.text_input("Item Name")
     category = st.selectbox("Category", ["Electronics", "Clothing", "Accessories", "Documents", "Other"])
     description = st.text_area("Description")
     photo = st.file_uploader("Upload Photo (Optional)", type=["png", "jpg", "jpeg"])
     photo_path = None
+    
     if photo:
         photo_path = os.path.join("photos", photo.name)
         if not os.path.exists("photos"):
