@@ -246,7 +246,7 @@ elif st.session_state['action'] == "Search Items":
                 for item in results:
                     item_id, item_name, category, description, date_found, status, photo_path = item
 
-                    # Create two columns for the layout (details on the left, photo on the right)
+                    # Create two columns for the layout
                     col1, col2 = st.columns([3, 1]) 
 
                     with col1:
@@ -258,7 +258,7 @@ elif st.session_state['action'] == "Search Items":
                         st.write(f"**Status:** {status}")
 
                     with col2:
-                        # Display the item's photo if it exists
+                        # Display the item's photo
                         if photo_path and os.path.exists(photo_path):
                             img = resize_image(photo_path, width=150)  
                             st.image(img, use_container_width=False)
@@ -271,34 +271,47 @@ elif st.session_state['action'] == "Search Items":
 elif st.session_state['action'] == "View All Items":
     st.markdown("<h3 style='text-align: center;'>All Found Items</h3>", unsafe_allow_html=True)
 
-    items = get_all_items(sort_by="id", ascending=True)
+    # Sorting Options with SelectBox
+    sort_by = st.selectbox(
+        "Sort Items By:",
+        options=["ID", "Item Name", "Date Found"],
+        index=0,  # Default to the first option
+    )
 
-    if items:
-        # Create two columns for the layout
-        for item in items:
-            item_id, item_name, category, description, date_found, status, photo_path = item
+    # Map SelectBox values to actual sorting keys
+    sort_key_mapping = {
+        "ID": "id",
+        "Item Name": "item_name",
+        "Date Found": "date_found",
+    }
 
-            # Create two columns: one for the details and one for the photo
-            col1, col2 = st.columns([3, 1])  
+    # Sort the item based on selected sorting choices
+    selected_sort_key = sort_key_mapping[sort_by]
+    try:
+        items = get_all_items(sort_by=selected_sort_key, ascending=True)
+        if items:
+            for item in items:
+                item_id, item_name, category, description, date_found, status, photo_path = item
 
-            with col1:
-                # Display the item's details
-                st.write(f"**Item Name:** {item_name}")
-                st.write(f"**Category:** {category}")
-                st.write(f"**Description:** {description}")
-                st.write(f"**Date Found:** {date_found}")
-                st.write(f"**Status:** {status}")
-                st.write("\n")
-                st.write("\n")
+                # Display item details
+                st.markdown("---")
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    st.write(f"**Item ID:** {item_id}")
+                    st.write(f"**Item Name:** {item_name}")
+                    st.write(f"**Category:** {category}")
+                    st.write(f"**Description:** {description}")
+                    st.write(f"**Date Found:** {date_found}")
+                    st.write(f"**Status:** {status}")
+                with col2:
+                    if photo_path and os.path.exists(photo_path):
+                        img = resize_image(photo_path, width=150)
+                        st.image(img, use_container_width=False)
+        else:
+            st.write("No items found.")
+    except sqlite3.OperationalError as e:
+        st.error(f"Error fetching items: {e}")
 
-            with col2:
-                # Display the item's photo if it exists
-                if photo_path and os.path.exists(photo_path):
-                    img = resize_image(photo_path, width=150)  
-                    st.image(img, use_container_width=False)
-
-    else:
-        st.write("No items found.")
 
 
 elif st.session_state['action'] == "Admin Actions":
