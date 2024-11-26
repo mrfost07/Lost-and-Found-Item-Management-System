@@ -297,15 +297,34 @@ elif st.session_state['action'] == "View All Items":
                 st.markdown("---")
                 col1, col2 = st.columns([2, 1])
                 with col1:
-                    st.write(f"**Item ID:** {item_id}")
-                    st.write(f"**Item Name:** {item_name}")
-                    st.write(f"**Category:** {category}")
-                    st.write(f"**Description:** {description}")
-                    st.write(f"**Date Found:** {date_found}")
-                    st.write(f"**Status:** {status}")
+                    st.markdown(
+                    f"<span style='color: cyan; font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>Item ID:</span> {item_id}",
+                    unsafe_allow_html=True
+                )
+                st.markdown(
+                    f"<span style='color: cyan; font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>Item Name:</span> {item_name}",
+                    unsafe_allow_html=True
+                )
+                st.markdown(
+                    f"<span style='color: cyan; font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>Category:</span> {category}",
+                    unsafe_allow_html=True
+                )
+                st.markdown(
+                    f"<span style='color: cyan; font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>Description:</span> {description}",
+                    unsafe_allow_html=True
+                )
+                st.markdown(
+                    f"<span style='color: cyan; font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>Date Found:</span> {date_found}",
+                    unsafe_allow_html=True
+                )
+                st.markdown(
+                    f"<span style='color: cyan; font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>Status:</span> {status}",
+                    unsafe_allow_html=True
+                )
+
                 with col2:
                     if photo_path and os.path.exists(photo_path):
-                        img = resize_image(photo_path, width=150)
+                        img = resize_image(photo_path, width=300)
                         st.image(img, use_container_width=False)
         else:
             st.write("No items found.")
