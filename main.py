@@ -95,8 +95,8 @@ if 'username' not in st.session_state:
 
 if not st.session_state["admin_mode"]:
     # Admin login form
-    username = st.sidebar.text_input("Username")
-    password = st.sidebar.text_input("Password", type="password")
+    username = st.sidebar.text_input("Username", placeholder="Enter your username")
+    password = st.sidebar.text_input("Password", type="password", placeholder="Enter your password")
 
     if st.sidebar.button("Login"):
         if validate_admin(username, password):
@@ -132,7 +132,7 @@ else:
         st.sidebar.markdown("<h3 style='text-align: center;'>⚙️Edit Admin Credentials</h3>", unsafe_allow_html=True)
         
         new_username = st.sidebar.text_input("New Username", value=username)
-        new_password = st.sidebar.text_input("New Password", type="password")
+        new_password = st.sidebar.text_input("New Password", type="password", placeholder="Set new password")
         
         if st.sidebar.button("Save"):
             # Update credentials in the database
@@ -218,7 +218,7 @@ st.markdown('<div class="underline"></div>', unsafe_allow_html=True)
 if st.session_state['action'] == "Add Item":
     st.markdown("<h3 style='text-align: center;'>Add Item</h3>", unsafe_allow_html=True) #add line below buttons
 
-    item_name = st.text_input("Item Name")
+    item_name = st.text_input("Item Name", placeholder="(ex. Bag, Cellphone, Id, Wallet)")
     category = st.selectbox("Category", ["Electronics", "Clothing", "Accessories", "Documents", "Other"])
     description = st.text_area("Description")
     photo = st.file_uploader("Upload Photo (Optional)", type=["png", "jpg", "jpeg"])
@@ -312,7 +312,7 @@ elif st.session_state['action'] == "View All Items":
                 st.markdown(
                     f"<span style='color: cyan; font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>Description:</span> {description}",
                     unsafe_allow_html=True
-                )
+                )   
                 st.markdown(
                     f"<span style='color: cyan; font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>Date Found:</span> {date_found}",
                     unsafe_allow_html=True
