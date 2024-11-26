@@ -285,7 +285,7 @@ elif st.session_state['action'] == "View All Items":
         "Date Found": "date_found",
     }
 
-    # Sort the item based on selected sorting choices
+    # Fetch sorted items based on the selected key
     selected_sort_key = sort_key_mapping[sort_by]
     try:
         items = get_all_items(sort_by=selected_sort_key, ascending=True)
@@ -321,10 +321,9 @@ elif st.session_state['action'] == "View All Items":
                     f"<span style='color: cyan; font-weight: bold; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;'>Status:</span> {status}",
                     unsafe_allow_html=True
                 )
-
                 with col2:
                     if photo_path and os.path.exists(photo_path):
-                        img = resize_image(photo_path, width=300)
+                        img = resize_image(photo_path, width=150)
                         st.image(img, use_container_width=False)
         else:
             st.write("No items found.")
